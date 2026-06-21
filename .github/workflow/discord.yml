@@ -1,0 +1,45 @@
+name: Discord Notify (Bot)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Read version
+        run: |
+          if [ -f version.txt ]; then
+            echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+          else
+            echo "VERSION=unknown" >> $GITHUB_ENV
+          fi
+
+      - name: Set commit message
+        run: |
+          echo "MESSAGE=${{ github.event.head_commit.message || 'No commit message' }}" >> $GITHUB_ENV
+
+      - name: Send Discord message via Bot
+        run: |
+          curl -X POST "https://discord.com/api/v10/channels/1505568444786147440/messages" \
+          -H "Authorization: Bot ${{ secrets.DISCORD_BOT_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"content\": \"<@&1505568359683592223>\",
+            \"embeds\": [
+              {
+                \"title\": \"Mortality Plugin Update\",
+                \"description\": \"**New update available!**\\n\\nVersion: **${VERSION}**\\n\\n**Changelog:**\\n${MESSAGE}\",
+                \"color\": 5763719,
+                \"footer\": {
+                  \"text\": \"Mortality • https://smp-modcraft.de/plugins/challenge\"
+                }
+              }
+            ]
+          }"
