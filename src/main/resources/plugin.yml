@@ -16,12 +16,6 @@ commands:
     description: Öffnet das Einstellungsmenü
     usage: /settings
 
-  commandpickaxe:
-    description: Gibt dir die Command-Spitzhacke
-    usage: /commandpickaxe [Spieler]
-    permission: commandpickaxe.give
-    aliases: [ cpickaxe, cpick ]
-
   resetworld:
      description: Setzt den Zustand der Weltherzen komplett zurück
 

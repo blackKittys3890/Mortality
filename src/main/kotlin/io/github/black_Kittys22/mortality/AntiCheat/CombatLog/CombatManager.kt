@@ -12,18 +12,11 @@ import net.kyori.adventure.text.format.NamedTextColor
 
 class CombatManager(private val plugin: JavaPlugin) {
 
-    // Mannequin UUID → owning Player UUID
     private val activeNpcs = mutableMapOf<UUID, Mannequin>()
 
-    // Player UUID → accumulated damage dealt to their NPC while they were offline
     private val pendingDamage = mutableMapOf<UUID, Double>()
 
-    // Reverse-lookup: Mannequin entity UUID → Player UUID (needed in the damage listener)
     private val mannequinToPlayer = mutableMapOf<UUID, UUID>()
-
-    // -------------------------------------------------------------------------
-    // Spawn / remove
-    // -------------------------------------------------------------------------
 
     fun spawnNpc(player: Player) {
         val location: Location = player.location
@@ -48,7 +41,6 @@ class CombatManager(private val plugin: JavaPlugin) {
             }
         }
 
-        // Clean up any previous NPC for this player first
         removeNpc(player.uniqueId)
 
         activeNpcs[player.uniqueId] = mannequin
@@ -65,15 +57,6 @@ class CombatManager(private val plugin: JavaPlugin) {
 
     fun hasNpc(uuid: UUID): Boolean = activeNpcs.containsKey(uuid)
 
-    // -------------------------------------------------------------------------
-    // Damage tracking
-    // -------------------------------------------------------------------------
-
-    /**
-     * Called by [NpcDamageListener] every time the Mannequin is hit.
-     * @param mannequinUuid The UUID of the Mannequin entity.
-     * @param damage        Raw damage value from the damage event.
-     */
     fun recordDamage(mannequinUuid: UUID, damage: Double) {
         val playerUuid = mannequinToPlayer[mannequinUuid] ?: return
         pendingDamage[playerUuid] = (pendingDamage[playerUuid] ?: 0.0) + damage
