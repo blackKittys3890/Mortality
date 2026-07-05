@@ -9,17 +9,13 @@ class MentionSettings(private val plugin: Main) {
 
     private val settingsFile = File(plugin.dataFolder, "mention_settings.yml")
     private val config = YamlConfiguration()
-
-    // Cache: UUID → Sound an/aus
     private val soundEnabled = mutableMapOf<UUID, Boolean>()
 
     init {
         load()
     }
 
-    fun isSoundEnabled(uuid: UUID): Boolean {
-        return soundEnabled.getOrDefault(uuid, true) // Standard: an
-    }
+    fun isSoundEnabled(uuid: UUID): Boolean = soundEnabled.getOrDefault(uuid, true)
 
     fun setSoundEnabled(uuid: UUID, enabled: Boolean) {
         soundEnabled[uuid] = enabled
@@ -35,7 +31,6 @@ class MentionSettings(private val plugin: Main) {
     private fun load() {
         if (!settingsFile.exists()) return
         config.load(settingsFile)
-
         config.getKeys(false).forEach { key ->
             val uuid = UUID.fromString(key)
             soundEnabled[uuid] = config.getBoolean("$key.sound", true)

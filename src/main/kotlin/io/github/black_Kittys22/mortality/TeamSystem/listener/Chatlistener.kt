@@ -18,7 +18,7 @@ class ChatListener(private val plugin: Main) : Listener {
         val prefix = if (team != null) {
             "${team.colorCode}[${team.displayName}]§r "
         } else {
-            "§7[Kein Team]§r "
+            plugin.languageManager.getColoredMessage(player, "team_not_in") + " "
         }
 
         event.format = "$prefix§7%s§8: §f%s"

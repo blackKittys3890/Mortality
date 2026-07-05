@@ -23,7 +23,6 @@ class MentionSettingsCommand(
             sender.sendMessage("Nur für Spieler!")
             return true
         }
-
         gui.openGUI(sender)
         return true
     }

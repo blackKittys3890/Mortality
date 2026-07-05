@@ -10,6 +10,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.ItemStack
+import io.github.black_Kittys22.mortality.language.sendLangSuccess
+import io.github.black_Kittys22.mortality.language.sendLangError
 
 class MentionSettingsGUI(private val settings: MentionSettings) : Listener {
 
@@ -17,20 +19,16 @@ class MentionSettingsGUI(private val settings: MentionSettings) : Listener {
 
     fun openGUI(player: Player) {
         val inv = Bukkit.createInventory(null, 27, guiTitle)
-
         val filler = ItemStack(Material.GRAY_STAINED_GLASS_PANE).apply {
             editMeta { it.displayName(Component.empty()) }
         }
         for (i in 0 until 27) inv.setItem(i, filler)
-
         inv.setItem(13, buildSoundItem(player))
-
         player.openInventory(inv)
     }
 
     private fun buildSoundItem(player: Player): ItemStack {
         val enabled = settings.isSoundEnabled(player.uniqueId)
-
         val material = if (enabled) Material.BELL else Material.DEAD_BUSH
         val statusText = if (enabled) "§a✔ Aktiviert" else "§c✘ Deaktiviert"
         val toggleHint = if (enabled) "§7Klicken zum Deaktivieren" else "§7Klicken zum Aktivieren"
@@ -43,17 +41,11 @@ class MentionSettingsGUI(private val settings: MentionSettings) : Listener {
                         .decoration(TextDecoration.BOLD, true)
                 )
                 meta.lore(listOf(
-                    Component.text("Status: $statusText")
-                        .decoration(TextDecoration.ITALIC, false),
-                    Component.text(toggleHint)
-                        .decoration(TextDecoration.ITALIC, false),
+                    Component.text("Status: $statusText").decoration(TextDecoration.ITALIC, false),
+                    Component.text(toggleHint).decoration(TextDecoration.ITALIC, false),
                     Component.empty(),
-                    Component.text("Spielt einen Sound wenn du")
-                        .color(NamedTextColor.GRAY)
-                        .decoration(TextDecoration.ITALIC, false),
-                    Component.text("im Chat erwähnt wirst.")
-                        .color(NamedTextColor.GRAY)
-                        .decoration(TextDecoration.ITALIC, false)
+                    Component.text("Spielt einen Sound wenn du").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("im Chat erwähnt wirst.").color(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
                 ))
             }
         }
@@ -63,18 +55,16 @@ class MentionSettingsGUI(private val settings: MentionSettings) : Listener {
     fun onInventoryClick(event: InventoryClickEvent) {
         if (event.view.title() != guiTitle) return
         event.isCancelled = true
-
         val player = event.whoClicked as? Player ?: return
         if (event.slot != 13) return
         settings.toggleSound(player.uniqueId)
         event.inventory.setItem(13, buildSoundItem(player))
 
-        val enabled = settings.isSoundEnabled(player.uniqueId)
-        if (enabled) {
-            player.sendMessage(Component.text("🔔 Mention-Sound aktiviert!", NamedTextColor.GREEN))
+        if (settings.isSoundEnabled(player.uniqueId)) {
+            player.sendLangSuccess("mention_sound_enabled")
             player.playSound(player.location, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f)
         } else {
-            player.sendMessage(Component.text("🔕 Mention-Sound deaktiviert!", NamedTextColor.RED))
+            player.sendLangError("mention_sound_disabled")
         }
     }
 }

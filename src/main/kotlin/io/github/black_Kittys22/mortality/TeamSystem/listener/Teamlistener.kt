@@ -33,7 +33,6 @@ class Teamlistener(private val plugin: Main) : Listener {
 
     fun updateTablist() {
         val tm = plugin.teamManager
-
         scoreboard.teams
             .filter { it.name.startsWith("tp_") }
             .forEach { it.unregister() }

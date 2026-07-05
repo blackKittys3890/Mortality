@@ -19,13 +19,14 @@ import io.github.black_Kittys22.mortality.TeamSystem.listener.TeamChatListener
 import io.github.black_Kittys22.mortality.TeamSystem.listener.Teamlistener
 import io.github.black_Kittys22.mortality.TeamSystem.manager.InviteManager
 import io.github.black_Kittys22.mortality.TeamSystem.manager.Teammanager
+import io.github.black_Kittys22.mortality.language.LanguageCommand
+import io.github.black_Kittys22.mortality.language.LanguageManager
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
-
 
 class Main : JavaPlugin() {
 
@@ -37,6 +38,8 @@ class Main : JavaPlugin() {
         private set
     private lateinit var heartSystem: HeartSystem
     private lateinit var combatSystem: CombatSystem
+    lateinit var languageManager: LanguageManager
+        private set
 
     override fun onLoad() {
         CommandAPI.onLoad(
@@ -48,6 +51,10 @@ class Main : JavaPlugin() {
 
     override fun onEnable() {
         CommandAPI.onEnable()
+
+        // Sprache-System zuerst initialisieren
+        languageManager = LanguageManager(this)
+
         heartSystem = HeartSystem(this, null)
         heartSystem.start()
 
@@ -71,14 +78,15 @@ class Main : JavaPlugin() {
 
         TeamCommand.register(this)
         TeamChatCommand.register(this)
+        LanguageCommand.register(this)
 
         teamListener.updateTablist()
         logger.info("Mortality erfolgreich gestartet")
         logger.info("${teamManager.getAllTeams().size} Team(s) geladen.")
+
         combatSystem = CombatSystem(this, heartSystem)
         combatSystem.start()
         server.pluginManager.registerEvents(LeaveListener(combatManager, combatSystem), this)
-
 
         this.getCommand("sethearts")?.setExecutor(heartSystem)
 
@@ -88,7 +96,6 @@ class Main : JavaPlugin() {
                 return@setExecutor true
             }
 
-            // Wetter in allen Welten fixen
             server.worlds.forEach { world ->
                 world.isThundering = false
                 world.setStorm(false)
@@ -98,15 +105,17 @@ class Main : JavaPlugin() {
             sender.sendMessage("§a[Mortality] Alle Weltherzen-Zustände wurden erfolgreich zurückgesetzt! Du kannst sie jetzt wieder neu abbauen.")
             true
         }
-
     }
 
     override fun onDisable() {
         CommandAPI.onDisable()
+        if (::languageManager.isInitialized) {
+            languageManager.savePlayerLanguages()
+        }
         if (::teamManager.isInitialized) {
             teamManager.saveTeams()
         }
-        logger.info("TeamPlugin deaktiviert.")
+        logger.info("Mortality deaktiviert.")
     }
 
     private fun fetchResourcePackHash(url: String): ByteArray {

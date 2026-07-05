@@ -22,12 +22,8 @@ class Teammanager(private val plugin: Main) {
         return true
     }
 
-    fun getTeamByPlayer(uuid: UUID): Team? =
-        teams.values.find { it.isMember(uuid) }
-
-    fun getTeamByName(name: String): Team? =
-        teams[name.lowercase()]
-
+    fun getTeamByPlayer(uuid: UUID): Team? = teams.values.find { it.isMember(uuid) }
+    fun getTeamByName(name: String): Team? = teams[name.lowercase()]
     fun getAllTeams(): List<Team> = teams.values.toList()
 
     fun joinTeam(uuid: UUID, teamName: String): Boolean {
@@ -55,7 +51,6 @@ class Teammanager(private val plugin: Main) {
     fun saveTeams() {
         plugin.dataFolder.mkdirs()
         config = YamlConfiguration()
-
         teams.forEach { (key, team) ->
             val p = "teams.$key"
             config["$p.displayName"] = team.displayName
@@ -69,20 +64,17 @@ class Teammanager(private val plugin: Main) {
     private fun loadTeams() {
         if (!dataFile.exists()) return
         config = YamlConfiguration.loadConfiguration(dataFile)
-
         val section = config.getConfigurationSection("teams") ?: return
         for (key in section.getKeys(false)) {
-            val p           = "teams.$key"
+            val p = "teams.$key"
             val displayName = config.getString("$p.displayName") ?: key
-            val colorCode   = config.getString("$p.colorCode")   ?: "§f"
-            val leaderStr   = config.getString("$p.leader")      ?: continue
-            val memberList  = config.getStringList("$p.members")
-
-            val leader  = runCatching { UUID.fromString(leaderStr) }.getOrNull() ?: continue
+            val colorCode = config.getString("$p.colorCode") ?: "§f"
+            val leaderStr = config.getString("$p.leader") ?: continue
+            val memberList = config.getStringList("$p.members")
+            val leader = runCatching { UUID.fromString(leaderStr) }.getOrNull() ?: continue
             val members = memberList.mapNotNull {
                 runCatching { UUID.fromString(it) }.getOrNull()
             }.toMutableSet()
-
             teams[key] = Team(key, displayName, colorCode, leader, members)
         }
         plugin.logger.info("${teams.size} Team(s) geladen.")

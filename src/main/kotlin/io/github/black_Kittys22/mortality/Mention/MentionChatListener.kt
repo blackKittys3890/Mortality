@@ -16,17 +16,13 @@ class MentionChatListener(private val plugin: Main, private val settings: Mentio
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onChat(event: AsyncChatEvent) {
-        val rawMessage = PlainTextComponentSerializer.plainText()
-            .serialize(event.message())
-
+        val rawMessage = PlainTextComponentSerializer.plainText().serialize(event.message())
         val mentionedPlayers = plugin.server.onlinePlayers.filter { player ->
             player != event.player && rawMessage.contains(player.name, ignoreCase = true)
         }
-
         if (mentionedPlayers.isEmpty()) return
 
         val highlightedMessage = buildHighlightedMessage(rawMessage, mentionedPlayers.map { it.name })
-
         event.message(highlightedMessage)
         plugin.server.scheduler.runTask(plugin, Runnable {
             mentionedPlayers.forEach { player ->
@@ -45,7 +41,6 @@ class MentionChatListener(private val plugin: Main, private val settings: Mentio
     private fun buildHighlightedMessage(rawMessage: String, playerNames: List<String>): TextComponent {
         val result = Component.text()
         var remaining = rawMessage
-
         while (remaining.isNotEmpty()) {
             val match = playerNames
                 .mapNotNull { name ->
@@ -58,24 +53,18 @@ class MentionChatListener(private val plugin: Main, private val settings: Mentio
                 result.append(Component.text(remaining))
                 break
             }
-
             val (index, name) = match
-
-
             if (index > 0) {
                 result.append(Component.text(remaining.substring(0, index)))
             }
-
             val nameSegment = remaining.substring(index, index + name.length)
             result.append(
                 Component.text(nameSegment)
                     .color(NamedTextColor.YELLOW)
                     .decorate(TextDecoration.BOLD)
             )
-
             remaining = remaining.substring(index + name.length)
         }
-
         return result.build()
     }
 }

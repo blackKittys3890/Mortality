@@ -16,30 +16,8 @@ commands:
     description: Öffnet das Einstellungsmenü
     usage: /settings
 
-  resetworld:
-     description: Setzt den Zustand der Weltherzen komplett zurück
+    language:
+      description: Ändere die Sprache / Change language
+      usage: /language <sprache/language>
+      aliases: [ lang, sprache ]
 
-  setsafezone:
-     description: Setzt die Safe Zone für den Nether Heart Reset
-     usage: /setsafezone <radius>
-     permission: mortality.setsafezone
-
-
-
-
-permissions:
-  commandpickaxe.give:
-    description: Erlaubt es, sich selbst die Spitzhacke zu geben
-    default: op
-
-  mortality.setsafezone:
-    description: Erlaubt das Setzen der Safe Zone
-    default: op
-
-  commandpickaxe.give.others:
-    description: Erlaubt es, anderen Spielern die Spitzhacke zu geben
-    default: op
-
-  commandpickaxe.bypass:
-    description: Erlaubt das Abbauen von Command-Blöcken ohne Spitzhacke
-    default: op

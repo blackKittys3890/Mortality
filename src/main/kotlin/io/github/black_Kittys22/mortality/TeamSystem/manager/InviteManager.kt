@@ -3,6 +3,7 @@ package io.github.black_Kittys22.mortality.TeamSystem.manager
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.UUID
+import io.github.black_Kittys22.mortality.language.sendLang
 
 class InviteManager(private val plugin: JavaPlugin) {
 
@@ -14,9 +15,8 @@ class InviteManager(private val plugin: JavaPlugin) {
         Bukkit.getScheduler().runTaskLater(plugin, Runnable {
             if (pendingInvites[invitedUUID] == teamName) {
                 pendingInvites.remove(invitedUUID)
-                Bukkit.getPlayer(invitedUUID)?.sendMessage(
-                    "§eHinweis: §7Deine Einladung zu §e$teamName §7ist abgelaufen."
-                )
+                val player = Bukkit.getPlayer(invitedUUID)
+                player?.sendLang("team_invite_expired", teamName)
             }
         }, INVITE_TIMEOUT_SECONDS * 20L)
     }

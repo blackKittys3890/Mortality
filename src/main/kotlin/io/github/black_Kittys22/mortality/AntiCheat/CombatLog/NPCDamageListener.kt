@@ -17,7 +17,6 @@ class NpcDamageListener(private val combatManager: CombatManager) : Listener {
     fun onAttack(event: EntityDamageByEntityEvent) {
         val entity = event.entity
         val player = event.damager
-
         if (entity !is Mannequin) return
         if (player !is Player) return
         if (!combatManager.isMannequin(entity.uniqueId)) return
@@ -25,36 +24,23 @@ class NpcDamageListener(private val combatManager: CombatManager) : Listener {
         val damage = calculateDamage(player)
         combatManager.recordDamage(entity.uniqueId, damage)
 
-        // Cancel the event so vanilla doesn't interfere, then apply feedback manually
         event.isCancelled = true
         entity.playHurtAnimation(player.location.yaw)
-
-        entity.world.playSound(
-            entity.location,
-            org.bukkit.Sound.ENTITY_PLAYER_HURT, 1f, 1f
-        )
-        entity.world.spawnParticle(
-            org.bukkit.Particle.DAMAGE_INDICATOR,
-            entity.location.add(0.0, 1.0, 0.0),
-            3, 0.2, 0.2, 0.2, 0.1
-        )
+        entity.world.playSound(entity.location, org.bukkit.Sound.ENTITY_PLAYER_HURT, 1f, 1f)
+        entity.world.spawnParticle(org.bukkit.Particle.DAMAGE_INDICATOR, entity.location.add(0.0, 1.0, 0.0), 3, 0.2, 0.2, 0.2, 0.1)
     }
 
     private fun calculateDamage(player: Player): Double {
         var damage = player.getAttribute(Attribute.ATTACK_DAMAGE)?.value ?: 1.0
         damage *= player.attackCooldown.toDouble()
-
         player.getPotionEffect(PotionEffectType.STRENGTH)?.let {
             damage += 3.0 * (it.amplifier + 1)
         }
         player.getPotionEffect(PotionEffectType.WEAKNESS)?.let {
             damage -= 4.0 * (it.amplifier + 1)
         }
-
-        val sharpness = player.inventory.itemInMainHand
-            .getEnchantmentLevel(Enchantment.SHARPNESS)
+        val sharpness = player.inventory.itemInMainHand.getEnchantmentLevel(Enchantment.SHARPNESS)
         if (sharpness > 0) damage += 0.5 + sharpness * 0.5
-
         return max(0.0, damage)
     }
 }

@@ -10,5 +10,7 @@ class JoinListener(private val combatManager: CombatManager) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         combatManager.handlePlayerJoin(event.player)
+
+        event.joinMessage = ""
     }
 }

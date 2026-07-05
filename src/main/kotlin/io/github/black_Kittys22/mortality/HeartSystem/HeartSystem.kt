@@ -20,101 +20,128 @@ import org.bukkit.OfflinePlayer
 class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSystem? = null) : Listener, CommandExecutor {
 
     val playerHearts = mutableMapOf<String, Double>()
-
     private val legacy = LegacyComponentSerializer.legacySection()
+
+    private fun getLanguageManager(): io.github.black_Kittys22.mortality.language.LanguageManager? {
+        return if (plugin is Main) plugin.languageManager else null
+    }
+
+    private fun Player.sendLang(key: String, vararg args: Any) {
+        val langManager = getLanguageManager()
+        if (langManager != null) {
+            sendMessage(langManager.getColoredMessage(this, key, *args))
+        }
+    }
+
+    private fun Player.sendLangError(key: String, vararg args: Any) {
+        val langManager = getLanguageManager()
+        if (langManager != null) {
+            val msg = langManager.getColoredMessage(this, key, *args)
+            sendMessage("§c$msg")
+        }
+    }
+
+    private fun Player.sendLangSuccess(key: String, vararg args: Any) {
+        val langManager = getLanguageManager()
+        if (langManager != null) {
+            val msg = langManager.getColoredMessage(this, key, *args)
+            sendMessage("§a$msg")
+        }
+    }
+
+    private fun CommandSender.sendLangError(key: String, vararg args: Any) {
+        val langManager = getLanguageManager()
+        if (langManager != null && this is Player) {
+            val msg = langManager.getColoredMessage(this, key, *args)
+            sendMessage("§c$msg")
+        } else if (this is Player) {
+            sendMessage(Component.text("Dazu hast du keine Rechte!", NamedTextColor.RED))
+        }
+    }
 
     fun start() {
         Bukkit.getPluginManager().registerEvents(this, plugin)
-
-        Bukkit.getOnlinePlayers().forEach { player ->
-            initializePlayer(player)
-        }
-
-        // Sendet die Actionbar alle 5 Ticks (0.25 Sekunden) an alle Online-Spieler
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(
-            plugin,
-            {
-                sendActionBarsToAll()
-            },
-            0L,
-            5L
-        )
+        Bukkit.getOnlinePlayers().forEach { player -> initializePlayer(player) }
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, { sendActionBarsToAll() }, 0L, 5L)
     }
 
-    // Umsetzung des /sethearts Befehls
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        // Berechtigungsprüfung (OP oder Permission)
         if (!sender.isOp && !sender.hasPermission("heartsystem.set")) {
-            sender.sendMessage(Component.text("Dazu hast du keine Rechte!", NamedTextColor.RED))
+            if (sender is Player) {
+                sender.sendLangError("no_permission")
+            } else {
+                sender.sendMessage(Component.text("Dazu hast du keine Rechte!", NamedTextColor.RED))
+            }
             return true
         }
-
-        // Prüfung auf richtige Argumentenanzahl (/sethearts <Spieler> <Anzahl>)
         if (args.size < 2) {
-            sender.sendMessage(Component.text("Benutzung: /sethearts <Spieler> <Anzahl>", NamedTextColor.RED))
+            if (sender is Player) {
+                sender.sendLangError("help_sethearts")
+            } else {
+                sender.sendMessage(Component.text("Benutzung: /sethearts <Spieler> <Anzahl>", NamedTextColor.RED))
+            }
             return true
         }
-
         val targetName = args[0]
         val heartAmount = args[1].toIntOrNull()
-
         if (heartAmount == null || heartAmount !in 0..3) {
-            sender.sendMessage(Component.text("Bitte gib eine gültige Herzzahl zwischen 0 und 3 ein!", NamedTextColor.RED))
+            if (sender is Player) {
+                sender.sendLangError("invalid_amount")
+            } else {
+                sender.sendMessage(Component.text("Bitte gib eine gültige Herzzahl zwischen 0 und 3 ein!", NamedTextColor.RED))
+            }
             return true
         }
-
-        // Sucht nach Online-Spielern, falls offline wird das OfflinePlayer-Objekt genutzt
         val onlinePlayer = Bukkit.getPlayer(targetName)
         if (onlinePlayer != null) {
             setHearts(onlinePlayer, heartAmount)
-            sender.sendMessage(
-                Component.text("Erfolgreich ", NamedTextColor.GREEN)
+            if (sender is Player) {
+                sender.sendLangSuccess("hearts_set", onlinePlayer.name, heartAmount)
+            } else {
+                sender.sendMessage(Component.text("Erfolgreich ", NamedTextColor.GREEN)
                     .append(Component.text(onlinePlayer.name, NamedTextColor.GOLD))
-                    .append(Component.text(" auf $heartAmount Herzen gesetzt.", NamedTextColor.GREEN))
-            )
+                    .append(Component.text(" auf $heartAmount Herzen gesetzt.", NamedTextColor.GREEN)))
+            }
             checkAndKickPlayerIfNoHearts(onlinePlayer)
         } else {
             @Suppress("DEPRECATION")
             val offlinePlayer = Bukkit.getOfflinePlayer(targetName)
             if (offlinePlayer.hasPlayedBefore() || offlinePlayer.name != null) {
                 setHearts(offlinePlayer, heartAmount)
-                sender.sendMessage(
-                    Component.text("Erfolgreich ", NamedTextColor.GREEN)
+                if (sender is Player) {
+                    sender.sendLangSuccess("hearts_set", offlinePlayer.name ?: targetName, heartAmount)
+                } else {
+                    sender.sendMessage(Component.text("Erfolgreich ", NamedTextColor.GREEN)
                         .append(Component.text(offlinePlayer.name ?: targetName, NamedTextColor.GOLD))
-                        .append(Component.text(" auf $heartAmount Herzen gesetzt.", NamedTextColor.GREEN))
-                )
+                        .append(Component.text(" auf $heartAmount Herzen gesetzt.", NamedTextColor.GREEN)))
+                }
             } else {
-                sender.sendMessage(Component.text("Spieler '$targetName' wurde nicht gefunden!", NamedTextColor.RED))
+                if (sender is Player) {
+                    sender.sendLangError("player_not_found")
+                } else {
+                    sender.sendMessage(Component.text("Spieler '$targetName' wurde nicht gefunden!", NamedTextColor.RED))
+                }
             }
         }
-
         return true
     }
 
     fun initializePlayer(player: Player) {
         val uuid = player.uniqueId.toString()
-
-        // Standardmäßig starten alle Spieler jetzt mit 3 Herzen (Maximum)
         if (!playerHearts.containsKey(uuid)) {
             playerHearts[uuid] = 3.0
         }
-
         sendHeartActionBar(player)
     }
 
-    fun getHearts(player: Player): Double {
-        return playerHearts[player.uniqueId.toString()] ?: 3.0
-    }
+    fun getHearts(player: Player): Double = playerHearts[player.uniqueId.toString()] ?: 3.0
 
     fun setHearts(player: Player, hearts: Double) {
         val uuid = player.uniqueId.toString()
         val clampedHearts = hearts.coerceIn(0.0, 3.0)
         playerHearts[uuid] = clampedHearts
-        player.sendMessage(
-            Component.text("✔ Du hast jetzt ", NamedTextColor.GREEN)
-                .append(Component.text(clampedHearts.toString(), NamedTextColor.GOLD))
-                .append(Component.text(" Herzen!", NamedTextColor.GREEN))
-        )
+        // Übergibt jetzt den Spielernamen UND die Herzen an die Sprachdatei
+        player.sendLangSuccess("hearts_current", player.name, clampedHearts.toInt())
         sendHeartActionBar(player)
     }
 
@@ -124,14 +151,10 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         val uuid = offlinePlayer.uniqueId.toString()
         val clampedHearts = hearts.coerceIn(0.0, 3.0)
         playerHearts[uuid] = clampedHearts
-
         val online = Bukkit.getPlayer(offlinePlayer.uniqueId)
         if (online != null && online.isOnline) {
-            online.sendMessage(
-                Component.text("✔ Du hast jetzt ", NamedTextColor.GREEN)
-                    .append(Component.text(clampedHearts.toString(), NamedTextColor.GOLD))
-                    .append(Component.text(" Herzen!", NamedTextColor.GREEN))
-            )
+            // Auch hier für den Online-Spieler korrigiert
+            online.sendLangSuccess("hearts_current", online.name, clampedHearts.toInt())
             sendHeartActionBar(online)
         } else {
             plugin.logger.info("setHearts: Offline-Spieler ${offlinePlayer.name} (UUID=$uuid) hat jetzt $clampedHearts Herzen")
@@ -143,17 +166,19 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
     private fun sendHeartActionBar(player: Player) {
         val uuid = player.uniqueId.toString()
         val hearts = playerHearts[uuid] ?: 3.0
-
-        val heartDisplay = getHeartDisplay(hearts)
+        val langManager = getLanguageManager()
+        val heartDisplay = if (langManager != null) {
+            langManager.getActionBar(player, hearts)
+        } else {
+            getHeartDisplay(hearts)
+        }
         if (heartDisplay.isNotEmpty()) {
             player.sendActionBar(Component.text(heartDisplay))
         }
     }
 
     private fun sendActionBarsToAll() {
-        Bukkit.getOnlinePlayers().forEach { player ->
-            sendHeartActionBar(player)
-        }
+        Bukkit.getOnlinePlayers().forEach { player -> sendHeartActionBar(player) }
     }
 
     private fun getHeartDisplay(hearts: Double): String {
@@ -165,7 +190,6 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         }
     }
 
-    // Gibt den farbigen Team-Präfix zurück, z.B. "§c[RedTeam]§r " oder "" wenn kein Team
     private fun teamPrefix(player: Player): String {
         val tm = (plugin as? Main)?.teamManager ?: return ""
         val team = tm.getTeamByPlayer(player.uniqueId) ?: return ""
@@ -178,31 +202,46 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         val killer = player.killer
         val uuid = player.uniqueId.toString()
         val currentHearts = playerHearts[uuid] ?: 3.0
+        val langManager = getLanguageManager()
 
         val (componentMessage, plainMessage) = if (killer != null) {
             val victimTeam = teamPrefix(player)
             val killerTeam = teamPrefix(killer)
-
-            // Plain-Text für den Logger (ohne Farbcodes)
             val tm = (plugin as? Main)?.teamManager
-            val victimTeamName  = tm?.getTeamByPlayer(player.uniqueId)?.name ?: "kein Team"
-            val killerTeamName  = tm?.getTeamByPlayer(killer.uniqueId)?.name ?: "kein Team"
+            val victimTeamName = tm?.getTeamByPlayer(player.uniqueId)?.name ?: "kein Team"
+            val killerTeamName = tm?.getTeamByPlayer(killer.uniqueId)?.name ?: "kein Team"
 
-            val comp = legacy.deserialize(
-                "§8[§6Mortality§8] §r${victimTeam}§c${player.name} §ewurde von ${killerTeam}§c${killer.name} §egetötet"
-            )
-            val plain = "[Mortality] [$victimTeamName] ${player.name} wurde von [$killerTeamName] ${killer.name} getötet"
-            Pair(comp, plain)
+            if (langManager != null) {
+                val deathMsg = langManager.getColoredMessage(player, "death_killed",
+                    victimTeam + player.name, killerTeam + killer.name)
+                val comp = legacy.deserialize(deathMsg)
+                val plain = "[Mortality] [$victimTeamName] ${player.name} wurde von [$killerTeamName] ${killer.name} getötet"
+                Pair(comp, plain)
+            } else {
+                val comp = legacy.deserialize(
+                    "§8[§6Mortality§8] §r${victimTeam}§c${player.name} §ewurde von ${killerTeam}§c${killer.name} §egetötet"
+                )
+                val plain = "[Mortality] [$victimTeamName] ${player.name} wurde von [$killerTeamName] ${killer.name} getötet"
+                Pair(comp, plain)
+            }
         } else {
             val victimTeam = teamPrefix(player)
             val tm = (plugin as? Main)?.teamManager
             val victimTeamName = tm?.getTeamByPlayer(player.uniqueId)?.name ?: "kein Team"
 
-            val comp = legacy.deserialize(
-                "§8[§6Mortality§8] §r${victimTeam}§c${player.name} §eist gestorben"
-            )
-            val plain = "[Mortality] [$victimTeamName] ${player.name} ist gestorben"
-            Pair(comp, plain)
+            if (langManager != null) {
+                val deathMsg = langManager.getColoredMessage(player, "death_died",
+                    victimTeam + player.name)
+                val comp = legacy.deserialize(deathMsg)
+                val plain = "[Mortality] [$victimTeamName] ${player.name} ist gestorben"
+                Pair(comp, plain)
+            } else {
+                val comp = legacy.deserialize(
+                    "§8[§6Mortality§8] §r${victimTeam}§c${player.name} §eist gestorben"
+                )
+                val plain = "[Mortality] [$victimTeamName] ${player.name} ist gestorben"
+                Pair(comp, plain)
+            }
         }
 
         event.deathMessage = ""
@@ -223,13 +262,15 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
     private fun checkAndKickPlayerIfNoHearts(player: Player) {
         val uuid = player.uniqueId.toString()
         val hearts = playerHearts[uuid] ?: 0.0
-
         if (hearts <= 0.0) {
             try {
-                player.kick(
-                    Component.text("Du hast keine Herzen mehr!\n", NamedTextColor.DARK_RED)
-                        .append(Component.text("Du wurdest gekickt!", NamedTextColor.RED))
-                )
+                val langManager = getLanguageManager()
+                val kickMsg = if (langManager != null) {
+                    langManager.getColoredMessage(player, "hearts_zero")
+                } else {
+                    "Du hast keine Herzen mehr!\nDu wurdest gekickt!"
+                }
+                player.kick(Component.text(kickMsg, NamedTextColor.RED))
                 plugin.logger.info("${player.name} wurde gekickt (keine Herzen mehr)!")
             } catch (ex: Exception) {
                 plugin.logger.warning("Fehler beim Kicken von ${player.name}: ${ex.message}")
@@ -253,10 +294,13 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
             if (hearts <= 0.0) {
                 plugin.logger.info("kickZeroHeartPlayersNow: Kicke ${player.name} (hearts=$hearts)")
                 try {
-                    player.kick(
-                        Component.text("Du hast keine Herzen mehr!\n", NamedTextColor.DARK_RED)
-                            .append(Component.text("Du wurdest gekickt!", NamedTextColor.RED))
-                    )
+                    val langManager = getLanguageManager()
+                    val kickMsg = if (langManager != null) {
+                        langManager.getColoredMessage(player, "hearts_zero")
+                    } else {
+                        "Du hast keine Herzen mehr!\nDu wurdest gekickt!"
+                    }
+                    player.kick(Component.text(kickMsg, NamedTextColor.RED))
                 } catch (ex: Exception) {
                     plugin.logger.warning("Fehler beim Kicken von ${player.name}: ${ex.message}")
                 }
@@ -273,12 +317,16 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
             playerHearts[uuid] = newHearts
             sendHeartActionBar(player)
 
-            val amountText = if (isLastHeart) "einem halben" else "einem"
-            player.sendMessage(
-                Component.text("💔 Du hast ", NamedTextColor.RED)
+            val langManager = getLanguageManager()
+            if (langManager != null) {
+                val heartText = if (isLastHeart) "half" else "one"
+                player.sendLang("hearts_lost", heartText)
+            } else {
+                val amountText = if (isLastHeart) "einem halben" else "einem"
+                player.sendMessage(Component.text("💔 Du hast ", NamedTextColor.RED)
                     .append(Component.text("$amountText Herz", NamedTextColor.DARK_RED))
-                    .append(Component.text(" verloren!", NamedTextColor.RED))
-            )
+                    .append(Component.text(" verloren!", NamedTextColor.RED)))
+            }
             checkAndKickPlayerIfNoHearts(player)
         }
     }

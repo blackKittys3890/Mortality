@@ -1,6 +1,7 @@
 package io.github.black_Kittys22.mortality.TeamSystem.listener
 
 import io.github.black_Kittys22.mortality.Main
+import io.github.black_Kittys22.mortality.language.sendLangError
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -18,14 +19,14 @@ class TeamChatListener(private val plugin: Main) : Listener {
         val team = tm.getTeamByPlayer(event.player.uniqueId)
         if (team == null) {
             event.isCancelled = true
-            event.player.sendMessage("§8[§6Mortality§8] §cDu bist in keinem Team.")
+            event.player.sendLangError("team_not_in")
             return
         }
 
         event.isCancelled = true
         val text = message.removePrefix("#").trimStart()
         if (text.isEmpty()) {
-            event.player.sendMessage("§8[§6Mortality§8] §cNachricht darf nicht leer sein.")
+            event.player.sendLangError("team_chat_empty")
             return
         }
 

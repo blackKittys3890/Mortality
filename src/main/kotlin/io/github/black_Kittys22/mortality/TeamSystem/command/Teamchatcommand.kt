@@ -4,6 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.arguments.GreedyStringArgument
 import dev.jorel.commandapi.executors.PlayerCommandExecutor
 import io.github.black_Kittys22.mortality.Main
+import io.github.black_Kittys22.mortality.language.sendLangError
 import org.bukkit.Bukkit
 
 object TeamChatCommand {
@@ -20,7 +21,7 @@ object TeamChatCommand {
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 val team = tm.getTeamByPlayer(player.uniqueId)
                 if (team == null) {
-                    player.sendMessage("§8[§6Team§8] §cDu bist in keinem Team.")
+                    player.sendLangError("team_not_in")
                     return@PlayerCommandExecutor
                 }
                 val message = args[0] as String

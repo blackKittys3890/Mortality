@@ -13,11 +13,11 @@ class LeaveListener(
     @EventHandler
     fun onplayerQuit(event: PlayerQuitEvent) {
         val player = event.player
-
         if (combatSystem.isInCombat(player)) {
             CombatManager.spawnNpc(player)
         }
-
         combatSystem.removeCombatTimer(player)
+
+        event.quitMessage = ""
     }
 }
