@@ -1,5 +1,6 @@
 package io.github.black_Kittys22.mortality
 
+import de.helden.manager.DenySpawnManager
 import dev.jorel.commandapi.CommandAPI
 import dev.jorel.commandapi.CommandAPIPaperConfig
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.CombatManager
@@ -38,6 +39,7 @@ class Main : JavaPlugin() {
         private set
     private lateinit var heartSystem: HeartSystem
     private lateinit var combatSystem: CombatSystem
+    private lateinit var denySpawnManager: DenySpawnManager
     lateinit var languageManager: LanguageManager
         private set
 
@@ -60,6 +62,8 @@ class Main : JavaPlugin() {
 
         val combatManager = CombatManager(this)
         val mentionSettings = MentionSettings(this)
+
+
         val mentionSettingsGUI = MentionSettingsGUI(mentionSettings)
 
         teamManager = Teammanager(this)
@@ -78,7 +82,9 @@ class Main : JavaPlugin() {
 
         TeamCommand.register(this)
         TeamChatCommand.register(this)
+        denySpawnManager = DenySpawnManager(this)
         LanguageCommand.register(this)
+        server.pluginManager.registerEvents(denySpawnManager, this)
 
         teamListener.updateTablist()
         logger.info("Mortality erfolgreich gestartet")
