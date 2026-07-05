@@ -1,6 +1,7 @@
 package io.github.black_Kittys22.mortality
 
-import de.helden.manager.DenySpawnManager
+import de.helden.manager.
+DenySpawnManager
 import dev.jorel.commandapi.CommandAPI
 import dev.jorel.commandapi.CommandAPIPaperConfig
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.CombatManager

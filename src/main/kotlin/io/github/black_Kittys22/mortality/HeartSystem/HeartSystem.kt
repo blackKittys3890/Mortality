@@ -20,6 +20,7 @@ import org.bukkit.OfflinePlayer
 class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSystem? = null) : Listener, CommandExecutor {
 
     val playerHearts = mutableMapOf<String, Double>()
+    val adminSettings = AdminSettings() // Instanz der neuen Admin-Einstellungen
     private val legacy = LegacyComponentSerializer.legacySection()
 
     private fun getLanguageManager(): io.github.black_Kittys22.mortality.language.LanguageManager? {
@@ -84,11 +85,13 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         }
         val targetName = args[0]
         val heartAmount = args[1].toIntOrNull()
-        if (heartAmount == null || heartAmount !in 0..3) {
+
+        // Limit auf 0 bis 100 erhöht, da 3 Herzen nicht mehr das Maximum sind
+        if (heartAmount == null || heartAmount !in 0..100) {
             if (sender is Player) {
                 sender.sendLangError("invalid_amount")
             } else {
-                sender.sendMessage(Component.text("Bitte gib eine gültige Herzzahl zwischen 0 und 3 ein!", NamedTextColor.RED))
+                sender.sendMessage(Component.text("Bitte gib eine gültige Herzzahl ein!", NamedTextColor.RED))
             }
             return true
         }
@@ -97,8 +100,6 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         if (onlinePlayer != null) {
             setHearts(onlinePlayer, heartAmount)
 
-            // LÖSUNG: Wenn der Sender sich selbst die Herzen setzt, reicht die "hearts_current" Meldung aus setHearts().
-            // Die "hearts_set" Meldung wird nur gesendet, wenn ein ANDERER Spieler bearbeitet wurde.
             if (sender is Player) {
                 if (sender.uniqueId != onlinePlayer.uniqueId) {
                     sender.sendLangSuccess("hearts_set", onlinePlayer.name, heartAmount.toString())
@@ -131,10 +132,12 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         }
         return true
     }
+
     fun initializePlayer(player: Player) {
         val uuid = player.uniqueId.toString()
         if (!playerHearts.containsKey(uuid)) {
-            playerHearts[uuid] = 3.0
+            // Neue Spieler starten mit dem im Admin-GUI konfigurierten Wert
+            playerHearts[uuid] = adminSettings.maxHeartsSetting.toDouble()
         }
         sendHeartActionBar(player)
     }
@@ -143,7 +146,8 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
 
     fun setHearts(player: Player, hearts: Double) {
         val uuid = player.uniqueId.toString()
-        val clampedHearts = hearts.coerceIn(0.0, 3.0)
+        // Keine Obergrenze von 3.0 mehr!
+        val clampedHearts = hearts.coerceAtLeast(0.0)
         playerHearts[uuid] = clampedHearts
         player.sendLangSuccess("hearts_current", clampedHearts.toInt())
         sendHeartActionBar(player)
@@ -153,7 +157,7 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
 
     fun setHearts(offlinePlayer: OfflinePlayer, hearts: Double) {
         val uuid = offlinePlayer.uniqueId.toString()
-        val clampedHearts = hearts.coerceIn(0.0, 3.0)
+        val clampedHearts = hearts.coerceAtLeast(0.0)
         playerHearts[uuid] = clampedHearts
         val online = Bukkit.getPlayer(offlinePlayer.uniqueId)
         if (online != null && online.isOnline) {
@@ -184,13 +188,32 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         Bukkit.getOnlinePlayers().forEach { player -> sendHeartActionBar(player) }
     }
 
+    // DIE NEUE REPEAT-LOGIK (Herzen X-mal kopieren)
     private fun getHeartDisplay(hearts: Double): String {
-        return when {
-            hearts >= 3.0  -> "\uE100"
-            hearts >= 2.0  -> "\uE101"
-            hearts >= 1.0  -> "\uE102"
-            else           -> ""
+        val currentHearts = hearts.toInt()
+
+        // Bei 0 oder weniger Herzen: Zeige das Zeichen "0"
+        if (currentHearts <= 0) {
+            return "0"
         }
+
+        val builder = StringBuilder()
+
+        // 1. Volle Herzen x-mal nebeneinander kopieren
+        repeat(currentHearts) {
+            builder.append(adminSettings.FULL_HEART_CHAR)
+        }
+
+        // 2. Mit grauen Herzen auffüllen, falls Leben verloren gingen
+        val maxHearts = adminSettings.maxHeartsSetting
+        if (currentHearts < maxHearts) {
+            val missingHearts = maxHearts - currentHearts
+            repeat(missingHearts) {
+                builder.append(adminSettings.EMPTY_HEART_CHAR)
+            }
+        }
+
+        return builder.toString()
     }
 
     private fun teamPrefix(player: Player): String {
