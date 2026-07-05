@@ -68,7 +68,6 @@ class LanguageManager(private val plugin: Main) {
                         playerLanguages[uuid] = lang
                     }
                 } catch (e: IllegalArgumentException) {
-                    // Ignore invalid UUIDs
                 }
             }
         } catch (e: Exception) {

@@ -92,11 +92,17 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
             }
             return true
         }
+
         val onlinePlayer = Bukkit.getPlayer(targetName)
         if (onlinePlayer != null) {
             setHearts(onlinePlayer, heartAmount)
+
+            // LÖSUNG: Wenn der Sender sich selbst die Herzen setzt, reicht die "hearts_current" Meldung aus setHearts().
+            // Die "hearts_set" Meldung wird nur gesendet, wenn ein ANDERER Spieler bearbeitet wurde.
             if (sender is Player) {
-                sender.sendLangSuccess("hearts_set", onlinePlayer.name, heartAmount)
+                if (sender.uniqueId != onlinePlayer.uniqueId) {
+                    sender.sendLangSuccess("hearts_set", onlinePlayer.name, heartAmount.toString())
+                }
             } else {
                 sender.sendMessage(Component.text("Erfolgreich ", NamedTextColor.GREEN)
                     .append(Component.text(onlinePlayer.name, NamedTextColor.GOLD))
@@ -109,11 +115,11 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
             if (offlinePlayer.hasPlayedBefore() || offlinePlayer.name != null) {
                 setHearts(offlinePlayer, heartAmount)
                 if (sender is Player) {
-                    sender.sendLangSuccess("hearts_set", offlinePlayer.name ?: targetName, heartAmount)
+                    sender.sendLangSuccess("hearts_set", offlinePlayer.name ?: targetName, heartAmount.toString())
                 } else {
                     sender.sendMessage(Component.text("Erfolgreich ", NamedTextColor.GREEN)
                         .append(Component.text(offlinePlayer.name ?: targetName, NamedTextColor.GOLD))
-                        .append(Component.text(" auf $heartAmount Herzen gesetzt.", NamedTextColor.GREEN)))
+                        .append(Component.text(" hat jetzt $heartAmount Herzen.", NamedTextColor.GREEN)))
                 }
             } else {
                 if (sender is Player) {
@@ -125,7 +131,6 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         }
         return true
     }
-
     fun initializePlayer(player: Player) {
         val uuid = player.uniqueId.toString()
         if (!playerHearts.containsKey(uuid)) {
@@ -140,8 +145,7 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         val uuid = player.uniqueId.toString()
         val clampedHearts = hearts.coerceIn(0.0, 3.0)
         playerHearts[uuid] = clampedHearts
-        // Übergibt jetzt den Spielernamen UND die Herzen an die Sprachdatei
-        player.sendLangSuccess("hearts_current", player.name, clampedHearts.toInt())
+        player.sendLangSuccess("hearts_current", clampedHearts.toInt())
         sendHeartActionBar(player)
     }
 
@@ -153,8 +157,7 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         playerHearts[uuid] = clampedHearts
         val online = Bukkit.getPlayer(offlinePlayer.uniqueId)
         if (online != null && online.isOnline) {
-            // Auch hier für den Online-Spieler korrigiert
-            online.sendLangSuccess("hearts_current", online.name, clampedHearts.toInt())
+            online.sendLangSuccess("hearts_current", clampedHearts.toInt())
             sendHeartActionBar(online)
         } else {
             plugin.logger.info("setHearts: Offline-Spieler ${offlinePlayer.name} (UUID=$uuid) hat jetzt $clampedHearts Herzen")
@@ -201,7 +204,6 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         val player = event.entity
         val killer = player.killer
         val uuid = player.uniqueId.toString()
-        val currentHearts = playerHearts[uuid] ?: 3.0
         val langManager = getLanguageManager()
 
         val (componentMessage, plainMessage) = if (killer != null) {

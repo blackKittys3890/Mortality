@@ -13,7 +13,7 @@ messages:
   language_not_available: "§cLanguage not available!"
 
   # Hearts System
-  hearts_set: "§aSuccessfully set §6%s §ato §6%d §ahearts."
+  hearts_set: "§aSuccessfully set §6%s §ato §6%s §ahearts."
   hearts_current: "§aYou now have §6%d §ahearts!"
   hearts_lost: "§c💔 You lost §6%s §cheart!"
   hearts_zero: "§4You have no hearts left!\n§cYou have been kicked!"

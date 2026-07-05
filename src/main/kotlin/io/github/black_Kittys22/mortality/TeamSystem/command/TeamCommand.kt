@@ -20,7 +20,6 @@ object TeamCommand {
         val tm = plugin.teamManager
         val im = plugin.inviteManager
 
-        // /team create <name> <anzeigename> <farbe>
         val createCmd = CommandAPICommand("create")
             .withArguments(
                 StringArgument("name"),
@@ -58,7 +57,6 @@ object TeamCommand {
                 }
             })
 
-        // /team invite <player>
         val inviteCmd = CommandAPICommand("invite")
             .withArguments(PlayerProfileArgument("target"))
             .executesPlayer(PlayerCommandExecutor { player, args ->
@@ -72,7 +70,6 @@ object TeamCommand {
                     return@PlayerCommandExecutor
                 }
 
-                // Holt das PlayerProfile und löst es zu einem Online-Spieler auf
                 val profile = args[0] as? com.destroystokyo.paper.profile.PlayerProfile
                 val target = profile?.uniqueId?.let { Bukkit.getPlayer(it) }
 
@@ -99,7 +96,6 @@ object TeamCommand {
                 target.sendLang("team_invite_deny")
             })
 
-        // /team accept
         val acceptCmd = CommandAPICommand("accept")
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 if (!im.hasInvite(player.uniqueId)) {
@@ -128,7 +124,6 @@ object TeamCommand {
                 }
             })
 
-        // /team deny
         val denyCmd = CommandAPICommand("deny")
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 if (!im.hasInvite(player.uniqueId)) {
@@ -140,7 +135,6 @@ object TeamCommand {
                 player.sendLangSuccess("team_invite_denied", teamName)
             })
 
-        // /team leave
         val leaveCmd = CommandAPICommand("leave")
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 val team = tm.getTeamByPlayer(player.uniqueId)
@@ -163,7 +157,6 @@ object TeamCommand {
                 plugin.teamListener.updateTablist()
             })
 
-        // /team info
         val infoCmd = CommandAPICommand("info")
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 val team = tm.getTeamByPlayer(player.uniqueId)
@@ -179,7 +172,6 @@ object TeamCommand {
                 player.sendLang("team_info_members", memberNames.joinToString(", "))
             })
 
-        // /team list
         val listCmd = CommandAPICommand("list")
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 val teams = tm.getAllTeams()
@@ -193,7 +185,6 @@ object TeamCommand {
                 }
             })
 
-        // /team disband
         val disbandCmd = CommandAPICommand("disband")
             .executesPlayer(PlayerCommandExecutor { player, args ->
                 val team = tm.getTeamByPlayer(player.uniqueId)
@@ -214,7 +205,6 @@ object TeamCommand {
                 plugin.teamListener.updateTablist()
             })
 
-        // Hauptbefehl /team registrieren inklusive Hilfemenü
         CommandAPICommand("team")
             .withSubcommands(createCmd, inviteCmd, acceptCmd, denyCmd, leaveCmd, infoCmd, listCmd, disbandCmd)
             .executesPlayer(PlayerCommandExecutor { player, _ ->
