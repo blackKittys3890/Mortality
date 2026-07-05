@@ -21,3 +21,8 @@ commands:
       usage: /language <sprache/language>
       aliases: [ lang, sprache ]
 
+    adminsettings:
+      description: "Öffnet das Admin-Einstellungs-GUI für die Herzen."
+      permission: mortality.admin
+      permission-message: "§cDu hast dazu keine Rechte!"
+

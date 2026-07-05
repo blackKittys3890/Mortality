@@ -20,7 +20,7 @@ import org.bukkit.OfflinePlayer
 class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSystem? = null) : Listener, CommandExecutor {
 
     val playerHearts = mutableMapOf<String, Double>()
-    val adminSettings = AdminSettings() // Instanz der neuen Admin-Einstellungen
+    val adminSettings = AdminSettings()
     private val legacy = LegacyComponentSerializer.legacySection()
 
     private fun getLanguageManager(): io.github.black_Kittys22.mortality.language.LanguageManager? {
@@ -85,8 +85,6 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         }
         val targetName = args[0]
         val heartAmount = args[1].toIntOrNull()
-
-        // Limit auf 0 bis 100 erhöht, da 3 Herzen nicht mehr das Maximum sind
         if (heartAmount == null || heartAmount !in 0..100) {
             if (sender is Player) {
                 sender.sendLangError("invalid_amount")
@@ -132,11 +130,9 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         }
         return true
     }
-
     fun initializePlayer(player: Player) {
         val uuid = player.uniqueId.toString()
         if (!playerHearts.containsKey(uuid)) {
-            // Neue Spieler starten mit dem im Admin-GUI konfigurierten Wert
             playerHearts[uuid] = adminSettings.maxHeartsSetting.toDouble()
         }
         sendHeartActionBar(player)
@@ -146,7 +142,6 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
 
     fun setHearts(player: Player, hearts: Double) {
         val uuid = player.uniqueId.toString()
-        // Keine Obergrenze von 3.0 mehr!
         val clampedHearts = hearts.coerceAtLeast(0.0)
         playerHearts[uuid] = clampedHearts
         player.sendLangSuccess("hearts_current", clampedHearts.toInt())
@@ -175,7 +170,8 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         val hearts = playerHearts[uuid] ?: 3.0
         val langManager = getLanguageManager()
         val heartDisplay = if (langManager != null) {
-            langManager.getActionBar(player, hearts)
+            // Nutze die neue Klon-Logik auch dann, wenn der LanguageManager geladen ist
+            getHeartDisplay(hearts)
         } else {
             getHeartDisplay(hearts)
         }
@@ -188,23 +184,18 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
         Bukkit.getOnlinePlayers().forEach { player -> sendHeartActionBar(player) }
     }
 
-    // DIE NEUE REPEAT-LOGIK (Herzen X-mal kopieren)
     private fun getHeartDisplay(hearts: Double): String {
         val currentHearts = hearts.toInt()
-
-        // Bei 0 oder weniger Herzen: Zeige das Zeichen "0"
         if (currentHearts <= 0) {
             return "0"
         }
 
         val builder = StringBuilder()
 
-        // 1. Volle Herzen x-mal nebeneinander kopieren
         repeat(currentHearts) {
             builder.append(adminSettings.FULL_HEART_CHAR)
         }
 
-        // 2. Mit grauen Herzen auffüllen, falls Leben verloren gingen
         val maxHearts = adminSettings.maxHeartsSetting
         if (currentHearts < maxHearts) {
             val missingHearts = maxHearts - currentHearts

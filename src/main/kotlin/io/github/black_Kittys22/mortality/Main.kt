@@ -1,19 +1,21 @@
 package io.github.black_Kittys22.mortality
 
-import de.helden.manager.
-DenySpawnManager
 import dev.jorel.commandapi.CommandAPI
 import dev.jorel.commandapi.CommandAPIPaperConfig
+import dev.jorel.commandapi.CommandTree
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.CombatManager
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.JoinListener
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.LeaveListener
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.NpcDamageListener
+import io.github.black_Kittys22.mortality.AntiCheat.Blocking.DenySpawnManager // KORRIGIERTER IMPORT
 import io.github.black_Kittys22.mortality.HeartSystem.CombatSystem
 import io.github.black_Kittys22.mortality.HeartSystem.HeartSystem
+import io.github.black_Kittys22.mortality.HeartSystem.AdminSettingsGUI // NEU
 import io.github.black_Kittys22.mortality.Mention.MentionChatListener
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettings
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsCommand
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsGUI
+import io.github.black_Kittys22.mortality.Nexus.NexusListener
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamChatCommand
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamCommand
 import io.github.black_Kittys22.mortality.TeamSystem.listener.ChatListener
@@ -41,6 +43,7 @@ class Main : JavaPlugin() {
     private lateinit var heartSystem: HeartSystem
     private lateinit var combatSystem: CombatSystem
     private lateinit var denySpawnManager: DenySpawnManager
+    private lateinit var adminSettingsGUI: AdminSettingsGUI // NEU
     lateinit var languageManager: LanguageManager
         private set
 
@@ -64,8 +67,8 @@ class Main : JavaPlugin() {
         val combatManager = CombatManager(this)
         val mentionSettings = MentionSettings(this)
 
-
         val mentionSettingsGUI = MentionSettingsGUI(mentionSettings)
+        adminSettingsGUI = AdminSettingsGUI(heartSystem) // NEU
 
         teamManager = Teammanager(this)
         inviteManager = InviteManager(this)
@@ -78,6 +81,8 @@ class Main : JavaPlugin() {
         server.pluginManager.registerEvents(TeamChatListener(this), this)
         server.pluginManager.registerEvents(ChatListener(this), this)
         server.pluginManager.registerEvents(mentionSettingsGUI, this)
+        server.pluginManager.registerEvents(adminSettingsGUI, this) // NEU
+
         getCommand("settings")?.setExecutor(MentionSettingsCommand(this, mentionSettingsGUI))
         server.pluginManager.registerEvents(MentionChatListener(this, mentionSettings), this)
 
@@ -86,6 +91,9 @@ class Main : JavaPlugin() {
         denySpawnManager = DenySpawnManager(this)
         LanguageCommand.register(this)
         server.pluginManager.registerEvents(denySpawnManager, this)
+        server.pluginManager.registerEvents(NexusListener(this), this)
+
+
 
         teamListener.updateTablist()
         logger.info("Mortality erfolgreich gestartet")
@@ -96,6 +104,13 @@ class Main : JavaPlugin() {
         server.pluginManager.registerEvents(LeaveListener(combatManager, combatSystem), this)
 
         this.getCommand("sethearts")?.setExecutor(heartSystem)
+
+        dev.jorel.commandapi.CommandAPICommand("adminsettings")
+            .withPermission("mortality.admin")
+            .executesPlayer(dev.jorel.commandapi.executors.PlayerCommandExecutor { player, _ ->
+                adminSettingsGUI.openGUI(player)
+            })
+            .register(this)
 
         this.getCommand("resetworld")?.setExecutor { sender, _, _, _ ->
             if (!sender.hasPermission("mortality.admin")) {
@@ -140,7 +155,7 @@ class Main : JavaPlugin() {
                 packUrl,
                 packHash,
                 Component.text("Das Resourcepack ist erforderlich!", NamedTextColor.RED),
-                true
+                false
             )
         }
     }
