@@ -38,7 +38,6 @@ class NexusListener(private val plugin: JavaPlugin) : Listener {
             var counter = 0
 
             override fun run() {
-                // 1. PERFORMANCE-OPTIMIERTE DESPAWN-PRÄVENTION (alle 20 Ticks / 1 Sekunde)
                 if (counter >= 20) {
                     for (world in Bukkit.getWorlds()) {
                         for (entity in world.entities) {
