@@ -16,6 +16,7 @@ import io.github.black_Kittys22.mortality.Mention.settings.MentionSettings
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsCommand
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsGUI
 import io.github.black_Kittys22.mortality.Nexus.NexusListener
+import io.github.black_Kittys22.mortality.Nexus.NexusMerger
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamChatCommand
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamCommand
 import io.github.black_Kittys22.mortality.TeamSystem.listener.ChatListener
@@ -73,7 +74,7 @@ class Main : JavaPlugin() {
         teamManager = Teammanager(this)
         inviteManager = InviteManager(this)
         teamListener = Teamlistener(this)
-
+        NexusMerger(this)
         server.pluginManager.registerEvents(NpcDamageListener(combatManager), this)
         server.pluginManager.registerEvents(JoinListener(combatManager), this)
         server.pluginManager.registerEvents(ResourcePackListener(), this)

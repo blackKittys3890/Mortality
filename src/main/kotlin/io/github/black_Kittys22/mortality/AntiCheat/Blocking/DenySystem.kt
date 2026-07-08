@@ -48,72 +48,11 @@ class DenySpawnManager(val plugin: Main) : Listener {
 
     }
 
-
-
-    // Netherite Verbot
-    @EventHandler
-    fun onPlayerMove(event: PlayerMoveEvent) {
-        val player = event.player
-        val loc = player.location
-        val world = player.world
-        for (x in -3..3) {
-            for (y in -3..3) {
-                for (z in -3..3) {
-                    val block = world.getBlockAt(loc.blockX + x, loc.blockY + y, loc.blockZ + z)
-                    if (block.type == Material.ANCIENT_DEBRIS ||
-                        block.type == Material.NETHERITE_BLOCK) {
-
-                        block.type = Material.NETHERRACK
-                    }
-                }
-            }
-        }
-    }
-
     // Zombie Villigar
     @EventHandler
     fun onEntityTransform(event: EntityTransformEvent) {
         if (event.entity.type == EntityType.ZOMBIE_VILLAGER) {
             event.isCancelled = true
-        }
-    }
-
-    // Elytra Verbot
-    @EventHandler
-    fun onElytraEquip(event: PlayerItemHeldEvent) {
-        val item = event.player.inventory.getItem(event.newSlot)
-        if (item != null && item.type == Material.ELYTRA) {
-            event.player.inventory.setItem(event.newSlot, null)
-        }
-    }
-
-    // Mace Verbot
-    @EventHandler
-    fun onItemHeld(event: PlayerItemHeldEvent) {
-        val player = event.player
-        val item = player.inventory.getItem(event.newSlot)
-        if (item != null && item.type.name.equals("MACE", ignoreCase = true)) {
-            player.inventory.remove(item)
-        }
-    }
-
-    // Totem Verbot
-    @EventHandler
-    fun onTotemUse(event: EntityResurrectEvent) {
-        if (event.entityType == EntityType.PLAYER) {
-            val player = event.entity
-            event.isCancelled = true
-        }
-    }
-
-    // Shulker Verbot
-    @EventHandler
-    fun onShulkerOpen(event: PlayerInteractEvent) {
-        if (event.action == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
-            val block = event.clickedBlock
-            if (block != null && block.type.name.contains("SHULKER_BOX")) {
-                event.isCancelled = true
-            }
         }
     }
 
@@ -131,20 +70,6 @@ class DenySpawnManager(val plugin: Main) : Listener {
 
         }
     }
-
-    // Portal Verbot 1
-    @EventHandler
-    fun onPortalUse(event: PlayerPortalEvent) {
-        event.isCancelled = true
-    }
-
-    // Portal Verbot 2
-    @EventHandler
-    fun onPortalCreate(event: BlockPhysicsEvent) {
-        if (event.block.type == Material.NETHER_PORTAL || event.block.type == Material.END_PORTAL)
-            event.isCancelled = true
-    }
-
 
 }
 
