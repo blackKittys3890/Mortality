@@ -15,6 +15,7 @@ import io.github.black_Kittys22.mortality.Mention.MentionChatListener
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettings
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsCommand
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsGUI
+import io.github.black_Kittys22.mortality.Nexus.NexusAbilityHandler
 import io.github.black_Kittys22.mortality.Nexus.NexusListener
 import io.github.black_Kittys22.mortality.Nexus.NexusMerger
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamChatCommand
@@ -58,7 +59,7 @@ class Main : JavaPlugin() {
 
     override fun onEnable() {
         CommandAPI.onEnable()
-
+        server.pluginManager.registerEvents(NexusAbilityHandler(this), this)
         // Sprache-System zuerst initialisieren
         languageManager = LanguageManager(this)
 
