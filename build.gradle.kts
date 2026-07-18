@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.black_Kittys22"
-version = "1.0.0"
+version = "1.6"
 
 repositories {
     mavenCentral()
