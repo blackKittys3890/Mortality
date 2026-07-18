@@ -7,17 +7,14 @@ import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.CombatManager
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.JoinListener
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.LeaveListener
 import io.github.black_Kittys22.mortality.AntiCheat.CombatLog.NpcDamageListener
-import io.github.black_Kittys22.mortality.AntiCheat.Blocking.DenySpawnManager // KORRIGIERTER IMPORT
+import io.github.black_Kittys22.mortality.AntiCheat.Blocking.DenySpawnManager
 import io.github.black_Kittys22.mortality.HeartSystem.CombatSystem
 import io.github.black_Kittys22.mortality.HeartSystem.HeartSystem
-import io.github.black_Kittys22.mortality.HeartSystem.AdminSettingsGUI // NEU
+import io.github.black_Kittys22.mortality.HeartSystem.AdminSettingsGUI
 import io.github.black_Kittys22.mortality.Mention.MentionChatListener
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettings
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsCommand
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsGUI
-import io.github.black_Kittys22.mortality.Nexus.NexusAbilityHandler
-import io.github.black_Kittys22.mortality.Nexus.NexusListener
-import io.github.black_Kittys22.mortality.Nexus.NexusMerger
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamChatCommand
 import io.github.black_Kittys22.mortality.TeamSystem.command.TeamCommand
 import io.github.black_Kittys22.mortality.TeamSystem.listener.ChatListener
@@ -29,6 +26,12 @@ import io.github.black_Kittys22.mortality.language.LanguageCommand
 import io.github.black_Kittys22.mortality.language.LanguageManager
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.command.Command
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -45,7 +48,7 @@ class Main : JavaPlugin() {
     private lateinit var heartSystem: HeartSystem
     private lateinit var combatSystem: CombatSystem
     private lateinit var denySpawnManager: DenySpawnManager
-    private lateinit var adminSettingsGUI: AdminSettingsGUI // NEU
+    private lateinit var adminSettingsGUI: AdminSettingsGUI
     lateinit var languageManager: LanguageManager
         private set
 
@@ -59,7 +62,7 @@ class Main : JavaPlugin() {
 
     override fun onEnable() {
         CommandAPI.onEnable()
-        server.pluginManager.registerEvents(NexusAbilityHandler(this), this)
+
         // Sprache-System zuerst initialisieren
         languageManager = LanguageManager(this)
 
@@ -70,12 +73,12 @@ class Main : JavaPlugin() {
         val mentionSettings = MentionSettings(this)
 
         val mentionSettingsGUI = MentionSettingsGUI(mentionSettings)
-        adminSettingsGUI = AdminSettingsGUI(heartSystem) // NEU
+        adminSettingsGUI = AdminSettingsGUI(heartSystem)
 
         teamManager = Teammanager(this)
         inviteManager = InviteManager(this)
         teamListener = Teamlistener(this)
-        NexusMerger(this)
+
         server.pluginManager.registerEvents(NpcDamageListener(combatManager), this)
         server.pluginManager.registerEvents(JoinListener(combatManager), this)
         server.pluginManager.registerEvents(ResourcePackListener(), this)
@@ -83,7 +86,7 @@ class Main : JavaPlugin() {
         server.pluginManager.registerEvents(TeamChatListener(this), this)
         server.pluginManager.registerEvents(ChatListener(this), this)
         server.pluginManager.registerEvents(mentionSettingsGUI, this)
-        server.pluginManager.registerEvents(adminSettingsGUI, this) // NEU
+        server.pluginManager.registerEvents(adminSettingsGUI, this)
 
         getCommand("settings")?.setExecutor(MentionSettingsCommand(this, mentionSettingsGUI))
         server.pluginManager.registerEvents(MentionChatListener(this, mentionSettings), this)
@@ -93,9 +96,6 @@ class Main : JavaPlugin() {
         denySpawnManager = DenySpawnManager(this)
         LanguageCommand.register(this)
         server.pluginManager.registerEvents(denySpawnManager, this)
-        server.pluginManager.registerEvents(NexusListener(this), this)
-
-
 
         teamListener.updateTablist()
         logger.info("Mortality erfolgreich gestartet")
@@ -107,28 +107,13 @@ class Main : JavaPlugin() {
 
         this.getCommand("sethearts")?.setExecutor(heartSystem)
 
+        // Admin Settings Command
         dev.jorel.commandapi.CommandAPICommand("adminsettings")
             .withPermission("mortality.admin")
             .executesPlayer(dev.jorel.commandapi.executors.PlayerCommandExecutor { player, _ ->
                 adminSettingsGUI.openGUI(player)
             })
             .register(this)
-
-        this.getCommand("resetworld")?.setExecutor { sender, _, _, _ ->
-            if (!sender.hasPermission("mortality.admin")) {
-                sender.sendMessage("§cDu hast dazu keine Rechte!")
-                return@setExecutor true
-            }
-
-            server.worlds.forEach { world ->
-                world.isThundering = false
-                world.setStorm(false)
-                world.clearWeatherDuration = 12000
-            }
-
-            sender.sendMessage("§a[Mortality] Alle Weltherzen-Zustände wurden erfolgreich zurückgesetzt! Du kannst sie jetzt wieder neu abbauen.")
-            true
-        }
     }
 
     override fun onDisable() {
