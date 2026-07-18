@@ -1,6 +1,7 @@
 package io.github.black_Kittys22.mortality.HeartSystem
 
 import io.github.black_Kittys22.mortality.Main
+import io.github.black_Kittys22.mortality.settings.AdminSettings
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
@@ -165,7 +166,7 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
 
     fun setHearts(offlinePlayer: OfflinePlayer, hearts: Int) = setHearts(offlinePlayer, hearts.toDouble())
 
-    private fun sendHeartActionBar(player: Player) {
+    fun sendHeartActionBar(player: Player) {
         val uuid = player.uniqueId.toString()
         val hearts = playerHearts[uuid] ?: 3.0
         val langManager = getLanguageManager()
@@ -192,15 +193,17 @@ class HeartSystem(private val plugin: Plugin, private val combatSystem: CombatSy
 
         val builder = StringBuilder()
 
+        val heartSymbol = adminSettings.activeHeartSymbol
+
         repeat(currentHearts) {
-            builder.append(adminSettings.FULL_HEART_CHAR)
+            builder.append(heartSymbol)
         }
 
         val maxHearts = adminSettings.maxHeartsSetting
         if (currentHearts < maxHearts) {
             val missingHearts = maxHearts - currentHearts
             repeat(missingHearts) {
-                builder.append(adminSettings.EMPTY_HEART_CHAR)
+                builder.append(adminSettings.EMPTY_HEART)
             }
         }
 

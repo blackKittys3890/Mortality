@@ -17,11 +17,6 @@ messages:
   hearts_current: "§aYou now have §6%d §ahearts!"
   hearts_lost: "§c💔 You lost §6%s §cheart!"
   hearts_zero: "§4You have no hearts left!\n§cYou have been kicked!"
-  hearts_actionbar:
-    3: "\uE100"
-    2: "\uE101"
-    1: "\uE102"
-    0: ""
   death_killed: "§8[§6Mortality§8] §r%s §ewas killed by %s"
   death_died: "§8[§6Mortality§8] §r%s §edied"
 
@@ -75,8 +70,6 @@ messages:
   mention_settings_toggle_disable: "§7Click to enable"
   mention_settings_desc: "§7Plays a sound when mentioned in chat."
 
-  # World System
-  world_reset_complete: "§aAll world hearts have been successfully reset!"
 
   # Command Help
   help_header: "§6Available Commands:"

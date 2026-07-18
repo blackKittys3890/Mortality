@@ -16,3 +16,7 @@ commands:
     description: Öffnet das Einstellungsmenü
     usage: /settings
 
+  heartcolor:
+    description: Ändert die Herzfarbe auf dem Server
+    usage: /heartcolor <farbe>
+    permission: heartsystem.color

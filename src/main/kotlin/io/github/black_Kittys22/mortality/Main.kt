@@ -11,6 +11,7 @@ import io.github.black_Kittys22.mortality.AntiCheat.Blocking.DenySpawnManager
 import io.github.black_Kittys22.mortality.HeartSystem.CombatSystem
 import io.github.black_Kittys22.mortality.HeartSystem.HeartSystem
 import io.github.black_Kittys22.mortality.HeartSystem.AdminSettingsGUI
+import io.github.black_Kittys22.mortality.HeartSystem.HeartColorCommand
 import io.github.black_Kittys22.mortality.Mention.MentionChatListener
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettings
 import io.github.black_Kittys22.mortality.Mention.settings.MentionSettingsCommand
@@ -104,7 +105,7 @@ class Main : JavaPlugin() {
         combatSystem = CombatSystem(this, heartSystem)
         combatSystem.start()
         server.pluginManager.registerEvents(LeaveListener(combatManager, combatSystem), this)
-
+        getCommand("heartcolor")?.setExecutor(HeartColorCommand(heartSystem))
         this.getCommand("sethearts")?.setExecutor(heartSystem)
 
         // Admin Settings Command
